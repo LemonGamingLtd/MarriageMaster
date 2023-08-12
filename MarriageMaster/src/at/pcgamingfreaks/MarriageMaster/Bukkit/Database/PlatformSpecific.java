@@ -63,11 +63,11 @@ public class PlatformSpecific implements IPlatformSpecific<MarriagePlayerData, M
 	{
 		if(delay < 1)
 		{
-			Bukkit.getScheduler().runTaskAsynchronously(plugin, runnable);
+			plugin.getScheduler().runTaskAsynchronously(runnable);
 		}
 		else
 		{
-			Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, runnable, delay);
+			plugin.getScheduler().runTaskLaterAsynchronously(runnable, delay);
 		}
 	}
 

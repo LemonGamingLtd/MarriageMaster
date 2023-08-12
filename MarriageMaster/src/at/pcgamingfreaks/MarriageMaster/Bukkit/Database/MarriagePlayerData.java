@@ -28,11 +28,11 @@ import at.pcgamingfreaks.MarriageMaster.Bukkit.MarriageMaster;
 import at.pcgamingfreaks.MarriageMaster.Database.MarriagePlayerDataBase;
 import at.pcgamingfreaks.Message.MessageComponent;
 
+import me.nahu.scheduler.wrapper.task.WrappedTask;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public class MarriagePlayerData extends MarriagePlayerDataBase<MarriagePlayer, C
 {
 	private AcceptPendingRequest openRequest = null;
 	private final List<AcceptPendingRequest> canCloseRequests = new LinkedList<>();
-	@Getter	@Setter	private BukkitTask delayedTpTask = null;
+	@Getter	@Setter	private WrappedTask delayedTpTask = null;
 	@Getter @Setter private long lastKissTime = 0, lastHugTime = 0;
 
 	public MarriagePlayerData(final @NotNull OfflinePlayer player)

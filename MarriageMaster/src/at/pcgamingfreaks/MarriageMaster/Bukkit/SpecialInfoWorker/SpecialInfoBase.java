@@ -17,6 +17,7 @@
 
 package at.pcgamingfreaks.MarriageMaster.Bukkit.SpecialInfoWorker;
 
+import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -26,10 +27,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public abstract class SpecialInfoBase implements Listener
 {
-	private final JavaPlugin plugin;
+	private final FoliaWrappedJavaPlugin plugin;
 	private final String permission;
 
-	protected SpecialInfoBase(final JavaPlugin plugin, final String permission)
+	protected SpecialInfoBase(final FoliaWrappedJavaPlugin plugin, final String permission)
 	{
 		this.plugin = plugin;
 		this.permission = permission;
@@ -40,7 +41,7 @@ public abstract class SpecialInfoBase implements Listener
 	{
 		if(event.getPlayer().hasPermission(permission))
 		{
-			Bukkit.getScheduler().runTaskLater(plugin, () -> {
+			plugin.getScheduler().runTaskLaterAtEntity(event.getPlayer(), () -> {
 				if(event.getPlayer().isOnline())
 				{
 					sendMessage(event.getPlayer());

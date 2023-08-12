@@ -46,6 +46,9 @@ import at.pcgamingfreaks.UUIDConverter;
 import at.pcgamingfreaks.Util.StringUtils;
 import at.pcgamingfreaks.Version;
 
+import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
+import me.nahu.scheduler.wrapper.WrappedScheduler;
+import me.nahu.scheduler.wrapper.WrappedSchedulerBuilder;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -61,7 +64,7 @@ import lombok.Setter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class MarriageMaster extends JavaPlugin implements MarriageMasterPlugin, IPlugin
+public class MarriageMaster extends FoliaWrappedJavaPlugin implements MarriageMasterPlugin, IPlugin
 {
 	@Setter(AccessLevel.PRIVATE) private static Version version = null;
 	@Getter @Setter(AccessLevel.PRIVATE) private static MarriageMaster instance;
@@ -86,6 +89,8 @@ public class MarriageMaster extends JavaPlugin implements MarriageMasterPlugin, 
 	@Override
 	public void onEnable()
 	{
+		getLogger().info("Successfully loaded scheduler of type: " + getScheduler().getImplementationType());
+
 		updater = new ManagedUpdater(this);
 		setInstance(this);
 		setVersion(new Version(this.getDescription().getVersion()));
@@ -336,8 +341,11 @@ public class MarriageMaster extends JavaPlugin implements MarriageMasterPlugin, 
 				final Location oldLocation = player.getLocation();
 				final double oldHealth = player.getHealth();
 				CommonMessages.getMessageDontMove().send(player, action.getDelay()/20L);
-				if(playerData.getDelayedTpTask() != null) playerData.getDelayedTpTask().cancel();
-				playerData.setDelayedTpTask(getServer().getScheduler().runTaskLater(this, () -> {
+				if(playerData.getDelayedTpTask() != null) {
+					playerData.getDelayedTpTask().cancel();
+				}
+
+				playerData.setDelayedTpTask(getScheduler().runTaskLaterAtEntity(player, () -> {
 					playerData.setDelayedTpTask(null);
 					if(action.getPlayer().isOnline())
 					{

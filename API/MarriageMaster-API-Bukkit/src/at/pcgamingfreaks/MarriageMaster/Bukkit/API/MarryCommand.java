@@ -21,6 +21,7 @@ import at.pcgamingfreaks.Bukkit.Command.SubCommand;
 import at.pcgamingfreaks.Bukkit.Message.Message;
 import at.pcgamingfreaks.Command.HelpData;
 
+import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -43,7 +44,7 @@ public abstract class MarryCommand extends SubCommand implements at.pcgamingfrea
 	protected static final List<String> EMPTY_TAB_COMPLETE_LIST = Collections.unmodifiableList(new ArrayList<>(0));
 	protected static final List<HelpData> EMPTY_HELP_LIST = Collections.unmodifiableList(new ArrayList<>(0));
 
-	protected final JavaPlugin plugin;
+	protected final FoliaWrappedJavaPlugin plugin;
 
 	private static String helpPartnerSelector    = "<partner name>";
 	private static Message messageNoPermission   = new Message(ChatColor.RED + "You don't have the permission to do that.");
@@ -61,7 +62,7 @@ public abstract class MarryCommand extends SubCommand implements at.pcgamingfrea
 	 * @param description The description of the command.
 	 * @param aliases     List of aliases for that command.
 	 */
-	protected MarryCommand(@NotNull JavaPlugin plugin, @NotNull String name, @NotNull String description, @Nullable String... aliases)
+	protected MarryCommand(@NotNull FoliaWrappedJavaPlugin plugin, @NotNull String name, @NotNull String description, @Nullable String... aliases)
 	{
 		this(plugin, name, description, null, aliases);
 	}
@@ -75,7 +76,7 @@ public abstract class MarryCommand extends SubCommand implements at.pcgamingfrea
 	 * @param permission  The permission to be checked for this command. Players without the permission neither can use the command nor will they see it in help.
 	 * @param aliases     List of aliases for that command.
 	 */
-	protected MarryCommand(@NotNull JavaPlugin plugin, @NotNull String name, @NotNull String description, @Nullable String permission, @Nullable String... aliases)
+	protected MarryCommand(@NotNull FoliaWrappedJavaPlugin plugin, @NotNull String name, @NotNull String description, @Nullable String permission, @Nullable String... aliases)
 	{
 		super(name, description, permission, aliases);
 		this.plugin = plugin;
@@ -91,7 +92,7 @@ public abstract class MarryCommand extends SubCommand implements at.pcgamingfrea
 	 * @param playerOnly  Limits the command to players, console can't use and can't see the command.
 	 * @param aliases     List of aliases for that command.
 	 */
-	protected MarryCommand(@NotNull JavaPlugin plugin, @NotNull String name, @NotNull String description, @Nullable String permission, boolean playerOnly, @Nullable String... aliases)
+	protected MarryCommand(@NotNull FoliaWrappedJavaPlugin plugin, @NotNull String name, @NotNull String description, @Nullable String permission, boolean playerOnly, @Nullable String... aliases)
 	{
 		this(plugin, name, description, permission, aliases);
 		this.playerOnly = playerOnly;
@@ -108,7 +109,7 @@ public abstract class MarryCommand extends SubCommand implements at.pcgamingfrea
 	 * @param partnerSelectorInHelpForMoreThanOnePartner If the help should contain a partner name parameter (for polygamy).
 	 * @param aliases       List of aliases for that command.
 	 */
-	protected MarryCommand(@NotNull JavaPlugin plugin, @NotNull String name, @NotNull String description, @Nullable String permission, boolean mustBeMarried, boolean partnerSelectorInHelpForMoreThanOnePartner, @Nullable String... aliases)
+	protected MarryCommand(@NotNull FoliaWrappedJavaPlugin plugin, @NotNull String name, @NotNull String description, @Nullable String permission, boolean mustBeMarried, boolean partnerSelectorInHelpForMoreThanOnePartner, @Nullable String... aliases)
 	{
 		this(plugin, name, description, permission, true, aliases);
 		this.mustBeMarried = mustBeMarried;

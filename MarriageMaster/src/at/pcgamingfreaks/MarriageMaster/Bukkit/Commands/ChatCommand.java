@@ -148,8 +148,9 @@ public class ChatCommand extends MarryCommand implements Listener
 	@Override
 	public void execute(@NotNull CommandSender sender, @NotNull String mainCommandAlias, @NotNull String alias, @NotNull String[] args)
 	{
-		plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
-			MarriagePlayer player = getMarriagePlugin().getPlayerData((Player) sender);
+		final Player player = (Player) sender;
+		plugin.getScheduler().runTaskAtEntity(player, () -> {
+			MarriagePlayer marriagePlayer = getMarriagePlugin().getPlayerData(player);
 			if(args.length == 0)
 			{
 				showHelp(sender, mainCommandAlias);
@@ -158,18 +159,18 @@ public class ChatCommand extends MarryCommand implements Listener
 			{
 				if(getMarriagePlugin().getCommandManager().isToggleSwitch(args[0]))
 				{
-					toggleChatSetting(player);
+					toggleChatSetting(marriagePlayer);
 				}
 				else if (isTargetSelection(args))
 				{
-					handleTargetSelection(player, args);
+					handleTargetSelection(marriagePlayer, args);
 				}
 				else
 				{
 					//noinspection ConstantConditions
-					if(player.getPrivateChatTarget() == null || player.getPrivateChatTarget().getPartner(player).isOnline())
+					if(marriagePlayer.getPrivateChatTarget() == null || marriagePlayer.getPrivateChatTarget().getPartner(marriagePlayer).isOnline())
 					{
-						doChat(player, String.join(" ", args)); // Doing the actual chat message logic
+						doChat(marriagePlayer, String.join(" ", args)); // Doing the actual chat message logic
 					}
 					else
 					{

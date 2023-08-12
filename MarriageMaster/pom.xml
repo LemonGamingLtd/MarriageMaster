@@ -208,8 +208,15 @@
 							<artifactSet>
 								<includes>
 									<include>at.pcgamingfreaks:MarriageMaster-*</include>
+									<include>me.nahu.*</include>
 								</includes>
 							</artifactSet>
+							<relocations>
+								<relocation>
+									<pattern>me.nahu</pattern>
+									<shadedPattern>at.pcgamingfreaks.MarriageMaster.Libs.me.nahu</shadedPattern>
+								</relocation>
+							</relocations>
 						</configuration>
 					</execution>
 				</executions>

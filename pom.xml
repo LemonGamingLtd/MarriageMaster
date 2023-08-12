@@ -58,6 +58,10 @@
 			<id>spigot-nexus</id>
 			<url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
 		</repository>
+		<repository>
+			<id>lemongaming-repo</id>
+			<url>https://repo.lemongaming.ltd/repository/maven-public/</url>
+		</repository>
 	</repositories>
 
 	<dependencies>

@@ -28,7 +28,7 @@ import at.pcgamingfreaks.MarriageMaster.Bukkit.MarriageMaster;
 import at.pcgamingfreaks.MarriageMaster.Database.MarriagePlayerDataBase;
 import at.pcgamingfreaks.Message.MessageComponent;
 
-import me.nahu.scheduler.wrapper.task.WrappedTask;
+import at.pcgf.libs.me.nahu.scheduler.wrapper.task.WrappedTask;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;

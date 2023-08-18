@@ -17,7 +17,7 @@
 
 package at.pcgamingfreaks.MarriageMaster.Bukkit.SpecialInfoWorker;
 
-import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
+import at.pcgf.libs.me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

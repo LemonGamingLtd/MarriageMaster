@@ -45,23 +45,20 @@ import at.pcgamingfreaks.ServerType;
 import at.pcgamingfreaks.UUIDConverter;
 import at.pcgamingfreaks.Util.StringUtils;
 import at.pcgamingfreaks.Version;
-
-import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
-import me.nahu.scheduler.wrapper.WrappedScheduler;
-import me.nahu.scheduler.wrapper.WrappedSchedulerBuilder;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+import at.pcgf.libs.me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class MarriageMaster extends FoliaWrappedJavaPlugin implements MarriageMasterPlugin, IPlugin

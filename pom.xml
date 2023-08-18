@@ -11,7 +11,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<bukkitVersion>1.15.2-R0.1-SNAPSHOT</bukkitVersion>
 		<bungeeVersion>1.15-SNAPSHOT</bungeeVersion>
-		<pcgfPluginLibVersion>1.0.39.1-SNAPSHOT</pcgfPluginLibVersion>
+		<pcgfPluginLibVersion>1.0.39.2-SNAPSHOT</pcgfPluginLibVersion>
 		<mockito.version>4.2.0</mockito.version>
 		<mavenShade.version>3.4.1</mavenShade.version>
 
@@ -51,16 +51,16 @@
 
 	<repositories>
 		<repository>
+			<id>lemongaming-repo</id>
+			<url>https://repo.lemongaming.ltd/repository/maven-public/</url>
+		</repository>
+		<repository>
 			<id>pcgf-repo</id>
 			<url>https://repo.pcgamingfreaks.at/repository/maven-everything/</url>
 		</repository>
 		<repository>
 			<id>spigot-nexus</id>
 			<url>https://hub.spigotmc.org/nexus/content/groups/public/</url>
-		</repository>
-		<repository>
-			<id>lemongaming-repo</id>
-			<url>https://repo.lemongaming.ltd/repository/maven-public/</url>
 		</repository>
 	</repositories>
 
@@ -171,13 +171,13 @@
 	</profiles>
 
 	<distributionManagement>
-		<repository>
-			<id>releases</id>
-			<url>https://repo.pcgamingfreaks.at/repository/maven-releases/</url>
-		</repository>
 		<snapshotRepository>
-			<id>snapshots</id>
-			<url>https://repo.pcgamingfreaks.at/repository/maven-snapshots/</url>
+			<id>lemongaming-repo</id>
+			<url>https://repo.lemongaming.ltd/repository/maven-snapshots/</url>
 		</snapshotRepository>
+		<repository>
+			<id>lemongaming-repo</id>
+			<url>https://repo.lemongaming.ltd/repository/maven-releases/</url>
+		</repository>
 	</distributionManagement>
 </project>

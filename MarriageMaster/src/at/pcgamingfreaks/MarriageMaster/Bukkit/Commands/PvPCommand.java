@@ -26,7 +26,7 @@ import at.pcgamingfreaks.MarriageMaster.Bukkit.CommonMessages;
 import at.pcgamingfreaks.MarriageMaster.Bukkit.MarriageMaster;
 import at.pcgamingfreaks.MarriageMaster.Permissions;
 
-import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
+import at.pcgf.libs.me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;

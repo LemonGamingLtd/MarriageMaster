@@ -21,11 +21,10 @@ import at.pcgamingfreaks.Bukkit.Command.SubCommand;
 import at.pcgamingfreaks.Bukkit.Message.Message;
 import at.pcgamingfreaks.Command.HelpData;
 
-import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
+import at.pcgf.libs.me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

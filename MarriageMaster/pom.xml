@@ -326,6 +326,10 @@
 												<include>at.pcgamingfreaks.MarriageMaster.Bungee.API.MarryCommand</include>
 											</includes>
 										</relocation>
+										<relocation>
+											<pattern>me.nahu</pattern>
+											<shadedPattern>at.pcgamingfreaks.MarriageMasterStandalone.libs.me.nahu</shadedPattern>
+										</relocation>
 									</relocations>
 									<filters>
 										<filter>

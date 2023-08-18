@@ -29,10 +29,7 @@ import at.pcgamingfreaks.MarriageMaster.Bukkit.MarriageMaster;
 import at.pcgamingfreaks.MarriageMaster.Permissions;
 import at.pcgamingfreaks.MarriageMaster.Placeholder.Placeholders;
 
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -197,9 +194,18 @@ public class TpCommand extends MarryCommand
 				}
 				else
 				{
-					player.teleport(loc);
-					messageTeleport.send(player);
-					messageTeleportTo.send(partner);
+					player.teleportAsync(loc).thenAccept(result -> {
+						if (!result) {
+							return;
+						}
+						messageTeleport.send(player);
+						messageTeleportTo.send(partner);
+					}).exceptionally(error -> {
+						error.printStackTrace();
+						player.sendMessage(ChatColor.RED + "Something went wrong while attempting to teleport!");
+						partner.sendMessage(ChatColor.RED + "Something went wrong while attempting to teleport!");
+						return null;
+					});
 				}
 			}
 			else

@@ -9,7 +9,7 @@
 		<revision>2.7.1-SNAPSHOT</revision>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<bukkitVersion>1.15.2-R0.1-SNAPSHOT</bukkitVersion>
+		<bukkitVersion>1.20.1-R0.1-SNAPSHOT</bukkitVersion>
 		<bungeeVersion>1.15-SNAPSHOT</bungeeVersion>
 		<pcgfPluginLibVersion>1.0.39.2-SNAPSHOT</pcgfPluginLibVersion>
 		<mockito.version>4.2.0</mockito.version>
@@ -57,6 +57,10 @@
 		<repository>
 			<id>pcgf-repo</id>
 			<url>https://repo.pcgamingfreaks.at/repository/maven-everything/</url>
+		</repository>
+		<repository>
+			<id>papermc-repo</id>
+			<url>https://repo.papermc.io/repository/maven-public/</url>
 		</repository>
 		<repository>
 			<id>spigot-nexus</id>

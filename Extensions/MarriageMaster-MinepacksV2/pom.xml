@@ -16,8 +16,8 @@
 	<dependencies>
 		<!-- Bukkit -->
 		<dependency>
-			<groupId>org.bukkit</groupId>
-			<artifactId>bukkit</artifactId>
+			<groupId>io.papermc.paper</groupId>
+			<artifactId>paper-api</artifactId>
 			<version>${bukkitVersion}</version>
 			<scope>provided</scope>
 		</dependency>

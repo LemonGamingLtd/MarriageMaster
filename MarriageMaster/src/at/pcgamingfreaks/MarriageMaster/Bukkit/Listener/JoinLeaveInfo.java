@@ -54,6 +54,6 @@ public class JoinLeaveInfo extends JoinLeaveInfoBase implements Listener
 	protected void runTaskLater(@NotNull Runnable task)
 	{
 		// TODO: This might not be thread-safe
-		plugin.getScheduler().runTaskLater(task, delay);
+		plugin.getScheduler().runTaskLater(task, delay > 0 ? delay : 1);
 	}
 }

@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2022 GeorgH93
+ *   Copyright (C) 2024 GeorgH93
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.sql.*;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -188,6 +189,20 @@ public abstract class SQL<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIA
 	{
 		runAsync(new DbElementStatementWithKeyFirstRunnable(this, databaseElement, query, args), databaseElement);
 	}
+
+	protected void runStatementAsyncIncludeKey(final @Nullable Runnable callback, final @Language("SQL") @NotNull String query, final @NotNull DatabaseElement databaseElement, final @NotNull Object... args)
+	{
+		DbElementStatementWithKeyRunnable runnable = new DbElementStatementWithKeyRunnable(this, databaseElement, query, args);
+		runnable.callback = callback;
+		runAsync(runnable, databaseElement);
+	}
+
+	protected void runStatementAsyncIncludeKeyFirst(final @Nullable Runnable callback, final @Language("SQL") @NotNull String query, final @NotNull DatabaseElement databaseElement, final @NotNull Object... args)
+	{
+		DbElementStatementWithKeyFirstRunnable runnable = new DbElementStatementWithKeyFirstRunnable(this, databaseElement, query, args);
+		runnable.callback = callback;
+		runAsync(runnable, databaseElement);
+	}
 	//endregion
 
 	@Override
@@ -288,7 +303,7 @@ public abstract class SQL<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIA
 			loadPlayers(connection, playerToLoad, priests); // Load players
 
 			// Load the marriages into the cache
-			logger.info("Writing marriages into cache ...");
+			logger.info("Loading marriages into cache ...");
 			for(StructMarriageSQL sm : marriagesSet)
 			{
 				MARRIAGE_PLAYER player1 = cache.getPlayerFromDbKey(sm.p1ID), player2 = cache.getPlayerFromDbKey(sm.p2ID);
@@ -299,7 +314,7 @@ public abstract class SQL<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIA
 				}
 				else
 				{
-					logger.log(Level.WARNING, "Player {} for marriage {} has not been loaded. Skipping", new Object[]{ (player1 == null ? 1 : 2), sm.marryID });
+					logger.log(Level.WARNING, "Player {0} for marriage {1} has not been loaded. Skipping", new Object[]{ (player1 == null ? 1 : 2), sm.marryID });
 				}
 			}
 			logger.info("Marriages loaded into cache");
@@ -326,7 +341,7 @@ public abstract class SQL<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIA
 						MARRIAGE_PLAYER priest = (rs.getObject(fieldPriest) == null) ? null : playerFromId(connection, rs.getInt(fieldPriest));
 						if(player1 == null || player2 == null)
 						{
-							logger.log(Level.WARNING, "Failed to load marriage (id: {}) because one of its players could not be loaded successful!", marriageId);
+							logger.log(Level.WARNING, "Failed to load marriage (id: {0}) because one of its players could not be loaded successful!", marriageId);
 							return;
 						}
 						String surname = surnameEnabled ? rs.getString(fieldSurname) : null;
@@ -518,48 +533,46 @@ public abstract class SQL<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIA
 	}
 
 	@Override
-	public void updateBackpackShareState(final @NotNull MARRIAGE_PLAYER player)
+	public void updateBackpackShareState(final @NotNull MARRIAGE_PLAYER player, final @Nullable Consumer<MarriagePlayerDataBase> updateCallback)
 	{
-		runStatementAsyncIncludeKey(querySetBackpackShareState, player, player.isSharingBackpack());
+		runStatementAsyncIncludeKey((updateCallback != null) ? () -> updateCallback.accept(player) : null, querySetBackpackShareState, player, player.isSharingBackpack());
 	}
 
 	@Override
-	public void updatePriestStatus(final @NotNull MARRIAGE_PLAYER player)
+	public void updatePriestStatus(final @NotNull MARRIAGE_PLAYER player, final @Nullable Consumer<MarriagePlayerDataBase> updateCallback)
 	{
-		runStatementAsyncIncludeKey(player.isPriest() ? querySetPriest : queryRemovePriest, player);
+		runStatementAsyncIncludeKey((updateCallback != null) ? () -> updateCallback.accept(player) : null, player.isPriest() ? querySetPriest : queryRemovePriest, player);
 	}
 
 	@Override
-	public void updateHome(final @NotNull MARRIAGE marriage)
+	public void updateHome(final @NotNull MARRIAGE marriage, final @Nullable Consumer<MarriageDataBase> updateCallback)
 	{
 		Home home = marriage.getHome();
-		if(home == null)
+		if (home == null)
 		{
 			runStatementAsyncIncludeKey(queryDelHome, marriage);
 		}
+		else if(useBungee)
+		{
+			runStatementAsyncIncludeKeyFirst((updateCallback != null) ? () -> updateCallback.accept(marriage) : null,
+			                                 queryUpdateHome, marriage, home.getX(), home.getY(), home.getZ(), home.getYaw(), home.getPitch(), home.getWorldName(), home.getHomeServer());
+		}
 		else
 		{
-			if(useBungee)
-			{
-				runStatementAsyncIncludeKeyFirst(queryUpdateHome, marriage, home.getX(), home.getY(), home.getZ(), home.getYaw(), home.getPitch(), home.getWorldName(), home.getHomeServer());
-			}
-			else
-			{
-				runStatementAsyncIncludeKeyFirst(queryUpdateHome, marriage, home.getX(), home.getY(), home.getZ(), home.getYaw(), home.getPitch(), home.getWorldName());
-			}
+			runStatementAsyncIncludeKeyFirst(queryUpdateHome, marriage, home.getX(), home.getY(), home.getZ(), home.getYaw(), home.getPitch(), home.getWorldName());
 		}
 	}
 
 	@Override
-	public void updatePvPState(final @NotNull MARRIAGE marriage)
+	public void updatePvPState(final @NotNull MARRIAGE marriage, final @Nullable Consumer<MarriageDataBase> updateCallback)
 	{
-		runStatementAsyncIncludeKey(queryPvPState, marriage, marriage.isPVPEnabled());
+		runStatementAsyncIncludeKey((updateCallback != null) ? () -> updateCallback.accept(marriage) : null, queryPvPState, marriage, marriage.isPVPEnabled());
 	}
 
 	@Override
-	public void updateMarriageColor(final @NotNull MARRIAGE marriage)
+	public void updateMarriageColor(final @NotNull MARRIAGE marriage, final @Nullable Consumer<MarriageDataBase> updateCallback)
 	{
-		runStatementAsyncIncludeKey(queryUpdateMarriageColor, marriage, marriage.getColor().name());
+		runStatementAsyncIncludeKey((updateCallback != null) ? () -> updateCallback.accept(marriage) : null, queryUpdateMarriageColor, marriage, marriage.getColor().name());
 	}
 
 	@Override
@@ -569,7 +582,7 @@ public abstract class SQL<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIA
 	}
 
 	@Override
-	public void marry(final @NotNull MARRIAGE marriage)
+	public void marry(final @NotNull MARRIAGE marriage, final @Nullable Consumer<MarriageDataBase> updateCallback)
 	{
 		//TODO test if the player id is available
 		runAsync(() -> {
@@ -585,7 +598,7 @@ public abstract class SQL<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIA
 					{
 						marriage.setDatabaseKey(rs.getInt(1));
 						cache.addDbKey(marriage);
-						if(marriageSavedCallback != null) marriageSavedCallback.run(marriage);
+						if(updateCallback != null) updateCallback.accept(marriage);
 					}
 				}
 			}
@@ -597,9 +610,9 @@ public abstract class SQL<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIA
 	}
 
 	@Override
-	public void updateSurname(final @NotNull MARRIAGE marriage)
+	public void updateSurname(final @NotNull MARRIAGE marriage, final @Nullable Consumer<MarriageDataBase> updateCallback)
 	{
-		runStatementAsyncIncludeKey(querySetSurname, marriage, marriage.getSurname());
+		runStatementAsyncIncludeKey((updateCallback != null) ? () -> updateCallback.accept(marriage) : null, querySetSurname, marriage, marriage.getSurname());
 	}
 
 	@Override
@@ -620,7 +633,7 @@ public abstract class SQL<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIA
 				}
 				else
 				{
-					logger.log(Level.INFO, "No auto ID for player \"{}\", try to load id from database ...", player.name);
+					logger.log(Level.INFO, "No auto ID for player \"{0}\", try to load id from database ...", player.name);
 					try(PreparedStatement ps2 = connection.prepareStatement(queryLoadPlayer))
 					{
 						ps2.setString(1, player.uuid);
@@ -632,7 +645,7 @@ public abstract class SQL<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIA
 							}
 							else
 							{
-								logger.log(Level.WARNING, ConsoleColor.RED + "No ID for player \"{}\", there is something wrong with this player! You should check that!" + ConsoleColor.RESET, player.name);
+								logger.log(Level.WARNING, ConsoleColor.RED + "No ID for player \"{0}\", there is something wrong with this player! You should check that!" + ConsoleColor.RESET, player.name);
 								return;
 							}
 						}
@@ -682,7 +695,7 @@ public abstract class SQL<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIA
 				}
 				else
 				{
-					logger.log(Level.WARNING, "No ID for marriage \"{} <-> {}\"!", new Object[]{marriage.player1.name, marriage.player2.name});
+					logger.log(Level.WARNING, "No ID for marriage \"{0} <-> {1}\"!", new Object[]{marriage.player1.name, marriage.player2.name});
 				}
 			}
 		}

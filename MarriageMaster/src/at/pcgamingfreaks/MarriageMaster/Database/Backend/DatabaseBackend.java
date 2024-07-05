@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2022 GeorgH93
+ *   Copyright (C) 2023 GeorgH93
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -23,20 +23,18 @@ import at.pcgamingfreaks.MarriageMaster.Database.FilesMigrator.MigrationMarriage
 import at.pcgamingfreaks.MarriageMaster.Database.FilesMigrator.MigrationPlayer;
 
 import org.jetbrains.annotations.NotNull;
-
-import lombok.Setter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 public abstract class DatabaseBackend<MARRIAGE_PLAYER extends MarriagePlayerDataBase, MARRIAGE extends MarriageDataBase, HOME extends Home>
 {
-	protected static final String MESSAGE_UPDATE_UUIDS = "Start updating database to UUIDs ...", MESSAGE_UPDATED_UUIDS = "Updated %d accounts to UUIDs.";
 	protected final IPlatformSpecific<MARRIAGE_PLAYER, MARRIAGE, HOME> platform;
 	protected final boolean useBungee, useUUIDSeparators, useOnlineUUIDs, surnameEnabled;
 	protected final Cache<MARRIAGE_PLAYER, MARRIAGE> cache;
 	protected final Logger logger;
-	@Setter protected MarriageSavedCallback marriageSavedCallback = null;
 
 	protected DatabaseBackend(final @NotNull IPlatformSpecific<MARRIAGE_PLAYER, MARRIAGE, HOME> platform, final @NotNull DatabaseConfiguration dbConfig, final boolean useBungee, final boolean surnameEnabled,
 	                          final @NotNull Cache<MARRIAGE_PLAYER, MARRIAGE> cache, final @NotNull Logger logger)
@@ -87,19 +85,19 @@ public abstract class DatabaseBackend<MARRIAGE_PLAYER extends MarriagePlayerData
 
 	public abstract void load(final @NotNull MARRIAGE_PLAYER player);
 
-	public abstract void updateHome(final @NotNull MARRIAGE marriage);
+	public abstract void updateHome(final @NotNull MARRIAGE marriage, final @Nullable Consumer<MarriageDataBase> updateCallback);
 
-	public abstract void updatePvPState(final @NotNull MARRIAGE marriage);
+	public abstract void updatePvPState(final @NotNull MARRIAGE marriage, final @Nullable Consumer<MarriageDataBase> updateCallback);
 
-	public abstract void updateBackpackShareState(final @NotNull MARRIAGE_PLAYER player);
+	public abstract void updateBackpackShareState(final @NotNull MARRIAGE_PLAYER player, final @Nullable Consumer<MarriagePlayerDataBase> updateCallback);
 
-	public abstract void updatePriestStatus(final @NotNull MARRIAGE_PLAYER player);
+	public abstract void updatePriestStatus(final @NotNull MARRIAGE_PLAYER player, final @Nullable Consumer<MarriagePlayerDataBase> updateCallback);
 
-	public abstract void updateSurname(final @NotNull MARRIAGE marriage);
+	public abstract void updateSurname(final @NotNull MARRIAGE marriage, final @Nullable Consumer<MarriageDataBase> updateCallback);
 
-	public abstract void updateMarriageColor(final @NotNull MARRIAGE marriage);
+	public abstract void updateMarriageColor(final @NotNull MARRIAGE marriage, final @Nullable Consumer<MarriageDataBase> updateCallback);
 
-	public abstract void marry(final @NotNull MARRIAGE marriage);
+	public abstract void marry(final @NotNull MARRIAGE marriage, final @Nullable Consumer<MarriageDataBase> updateCallback);
 
 	public abstract void divorce(final @NotNull MARRIAGE marriage);
 

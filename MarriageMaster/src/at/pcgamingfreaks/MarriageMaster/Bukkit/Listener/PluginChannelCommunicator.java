@@ -1,5 +1,5 @@
 /*
- *   Copyright (C) 2022 GeorgH93
+ *   Copyright (C) 2024 GeorgH93
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -25,6 +25,7 @@ import at.pcgamingfreaks.MarriageMaster.Bukkit.Commands.TpCommand;
 import at.pcgamingfreaks.MarriageMaster.Bukkit.MarriageMaster;
 import at.pcgamingfreaks.MarriageMaster.Database.PluginChannelCommunicatorBase;
 
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -46,6 +47,8 @@ import java.util.logging.Level;
 
 public class PluginChannelCommunicator extends PluginChannelCommunicatorBase implements PluginMessageListener, Listener
 {
+	private static final String CHANNEL_BUNGEE_CORD = "BungeeCord";
+
 	@Getter @Setter(AccessLevel.PRIVATE) private static String serverName = null;
 
 	private final MarriageMaster plugin;
@@ -66,6 +69,11 @@ public class PluginChannelCommunicator extends PluginChannelCommunicatorBase imp
 		plugin.getServer().getMessenger().registerIncomingPluginChannel(plugin, CHANNEL_MARRIAGE_MASTER, this);
 
 		setServerName(plugin.getConfiguration().getServerName());
+
+		if (serverName == null) logger.info("Server name not yet known. Waiting for initial sync.");
+		else logger.info("Last known server name: " + serverName);
+
+		logger.info("BungeeCord data sync handler initialized.");
 	}
 
 	@Override
@@ -79,7 +87,7 @@ public class PluginChannelCommunicator extends PluginChannelCommunicatorBase imp
 	@Override
 	protected void receiveUnknownChannel(@NotNull String channel, byte[] bytes)
 	{
-		if (channel.equals(CHANNEL_BUNGEE_CORD))
+		if (channel.equals(CHANNEL_BUNGEE_CORD) || channel.equals("bungeecord:main"))
 		{
 			try(DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes)))
 			{
@@ -88,8 +96,13 @@ public class PluginChannelCommunicator extends PluginChannelCommunicatorBase imp
 					String server = in.readUTF();
 					if(!server.equals(serverName)) // Only save if the name of the server has changed
 					{
+						logger.info("Updating server name to: " + server);
 						setServerName(server);
 						plugin.getConfiguration().setServerName(server);
+					}
+					else
+					{
+						logger.info("Server name already up to date.");
 					}
 					serverNameUpdated = true;
 				}
@@ -185,7 +198,10 @@ public class PluginChannelCommunicator extends PluginChannelCommunicatorBase imp
 	{
 		if(!serverNameUpdated)
 		{
-			sendMessage(CHANNEL_BUNGEE_CORD, buildStringMessage("GetServer"));
+			plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+				logger.info("Request server name from BungeeCord ...");
+				sendMessage(CHANNEL_BUNGEE_CORD, buildStringMessage("GetServer"));
+			}, 20);
 		}
 		// If the server is empty and a player joins the server we have to do a re-sync
 		if(plugin.getServer().getOnlinePlayers().size() == 1)
@@ -203,13 +219,25 @@ public class PluginChannelCommunicator extends PluginChannelCommunicatorBase imp
 
 	private void sendMessage(String channel, byte[] data)
 	{
+		if (Bukkit.isPrimaryThread())
+		{
+			performSendMessage(channel, data);
+		}
+		else
+		{
+			Bukkit.getScheduler().runTask(plugin, () -> performSendMessage(channel, data));
+		}
+	}
+
+	private void performSendMessage(String channel, byte[] data)
+	{
 		if(!plugin.getServer().getOnlinePlayers().isEmpty())
 		{
 			plugin.getServer().getOnlinePlayers().iterator().next().sendPluginMessage(plugin, channel, data);
 		}
 		else
 		{
-			logger.warning("Failed to send PluginMessage, there is no player online!");
+			logger.severe("Failed to send PluginMessage, there is no player online!");
 		}
 	}
 	//endregion

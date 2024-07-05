@@ -56,6 +56,10 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
@@ -241,7 +245,7 @@ public class MarriageMaster extends FoliaWrappedJavaPlugin implements MarriageMa
 
 	private void unload()
 	{
-		placeholderManager.close();
+		if (placeholderManager != null) placeholderManager.close();
 		getServer().getMessenger().unregisterIncomingPluginChannel(this);
 		getServer().getMessenger().unregisterOutgoingPluginChannel(this);
 		if(pluginChannelCommunicator != null)
@@ -250,12 +254,12 @@ public class MarriageMaster extends FoliaWrappedJavaPlugin implements MarriageMa
 			pluginChannelCommunicator = null;
 		}
 		HandlerList.unregisterAll(this);
-		getServer().getMessenger().unregisterIncomingPluginChannel(this);
-		getServer().getMessenger().unregisterOutgoingPluginChannel(this);
-		database.close();
+		if (database != null) database.close();
 		database = null;
-		commandManager.close();
-		marriageManager.close();
+		if (commandManager != null) commandManager.close();
+		commandManager = null;
+		if (marriageManager != null) marriageManager.close();
+		marriageManager = null;
 	}
 	//endregion
 

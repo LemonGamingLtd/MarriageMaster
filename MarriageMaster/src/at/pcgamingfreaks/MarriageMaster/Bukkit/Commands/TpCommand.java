@@ -39,10 +39,13 @@ import org.jetbrains.annotations.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 public class TpCommand extends MarryCommand
 {
@@ -216,6 +219,16 @@ public class TpCommand extends MarryCommand
 		else
 		{
 			messagePartnerVanished.send(player);
+		}
+	}
+
+	public static CompletableFuture<Boolean> teleportAsync(Player player, Location location) {
+		try {
+			Method method = player.getClass().getMethod("teleportAsync", Location.class);
+			return (CompletableFuture<Boolean>) method.invoke(player, location);
+		} catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+			// paper's teleportAsync not found, fallback to bukkit's teleport
+			return CompletableFuture.completedFuture(player.teleport(location));
 		}
 	}
 

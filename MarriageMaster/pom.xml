@@ -28,6 +28,10 @@
 	</properties>
 
 	<repositories>
+		<repository>
+			<id>lemongaming-repo</id>
+			<url>https://repo.lemongaming.ltd/repository/maven-public/</url>
+		</repository>
 		<repository> <!-- for vault -->
 			<id>herocraftonline-repo</id>
 			<url>https://nexus.hc.to/content/repositories/pub_releases/</url>

@@ -170,7 +170,7 @@ public class ChatCommand extends MarryCommand implements Listener
 					//noinspection ConstantConditions
 					if(marriagePlayer.getPrivateChatTarget() == null || marriagePlayer.getPrivateChatTarget().getPartner(marriagePlayer).isOnline())
 					{
-						doChat(marriagePlayer, String.join(" ", args)); // Doing the actual chat message logic
+						plugin.getScheduler().runTaskAsynchronously(() -> doChat(marriagePlayer, String.join(" ", args))); // Doing the actual chat message logic
 					}
 					else
 					{
@@ -230,7 +230,7 @@ public class ChatCommand extends MarryCommand implements Listener
 		if(player.isPrivateChatDefault())
 		{
 			event.setCancelled(true);
-			doChat(player, event.getMessage());
+			plugin.getScheduler().runTaskAsynchronously(() -> doChat(player, event.getMessage()));
 		}
 	}
 

@@ -26,12 +26,10 @@ import at.pcgamingfreaks.MarriageMaster.Bukkit.API.MarriagePlayer;
 import at.pcgamingfreaks.MarriageMaster.Bukkit.CommonMessages;
 import at.pcgamingfreaks.MarriageMaster.Bukkit.Database.MarriageData;
 import at.pcgamingfreaks.MarriageMaster.Bukkit.Database.MarriagePlayerData;
-import at.pcgamingfreaks.MarriageMaster.Bukkit.Management.Requests.PriestDivorceAcceptRequest;
-import at.pcgamingfreaks.MarriageMaster.Bukkit.Management.Requests.PriestMarryAcceptRequest;
-import at.pcgamingfreaks.MarriageMaster.Bukkit.Management.Requests.SelfDivorceAcceptRequest;
-import at.pcgamingfreaks.MarriageMaster.Bukkit.Management.Requests.SelfMarryAcceptRequest;
+import at.pcgamingfreaks.MarriageMaster.Bukkit.Management.Requests.*;
 import at.pcgamingfreaks.MarriageMaster.Bukkit.MarriageMaster;
 import at.pcgamingfreaks.MarriageMaster.Bukkit.Range;
+import at.pcgamingfreaks.MarriageMaster.Bukkit.SurnameConfirmationMode;
 import at.pcgamingfreaks.MarriageMaster.Database.MarriagePlayerDataBase;
 import at.pcgamingfreaks.MarriageMaster.Permissions;
 import at.pcgamingfreaks.MarriageMaster.Placeholder.Placeholders;
@@ -50,7 +48,11 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import lombok.Getter;
+
 import java.util.Date;
+import java.util.Locale;
+import java.util.Set;
 
 public final class MarriageManagerImpl implements at.pcgamingfreaks.MarriageMaster.Bukkit.API.MarriageManager
 { // TODO refactor me!!!!
@@ -59,7 +61,7 @@ public final class MarriageManagerImpl implements at.pcgamingfreaks.MarriageMast
 
 	private final MarriageMaster plugin;
 	private final String  surnameNotAllowedCharactersRex, dialogDoYouWant, dialogMarried;
-	private final Message messageSurnameSuccess, messageSurnameFailed, messageSurnameToShort, messageSurnameToLong, messageSurnameAlreadyUsed;
+	private final Message messageSurnameSuccess, messageSurnameFailed, messageSurnameToShort, messageSurnameToLong, messageSurnameAlreadyUsed, messageSurnameBanned, messageSurnamePlayerOffline;
 	private final Message messageAlreadyMarried, messageNotWithHimself, messageSurnameNeeded, messageMarried, messageHasMarried, messageBroadcastMarriage, messageNotInRange, messageAlreadyOpenRequest;
 	private final Message messageNotYourself, messageSelfNotInRange, messageSelfAlreadyMarried, messageSelfOtherAlreadyMarried, messageSelfAlreadyOpenRequest, messageSelfConfirm, messageSelfMarryRequestSent;
 	private final Message messageAlreadySamePair, messageSelfAlreadySamePair;
@@ -69,6 +71,8 @@ public final class MarriageManagerImpl implements at.pcgamingfreaks.MarriageMast
 	private final boolean surnameAllowColors, confirm, bothOnDivorce, autoDialog, otherPlayerOnSelfDivorce;
 	private final int surnameMinLength, surnameMaxLength, maxPartners;
 	private final double rangeMarry, rangeDivorce, rangeMarrySquared, rangeDivorceSquared;
+	private final Set<String> bannedSurnames;
+	@Getter private final SurnameConfirmationMode surnameConfirmationMode;
 
 	public MarriageManagerImpl(final @NotNull MarriageMaster plugin)
 	{
@@ -81,10 +85,14 @@ public final class MarriageManagerImpl implements at.pcgamingfreaks.MarriageMast
 		}
 		else
 		{
-			surnameNotAllowedCharactersRex = "[^" + plugin.getConfiguration().getSurnamesAllowedCharacters() + "]";
+			String allowedChars = plugin.getConfiguration().getSurnamesAllowedCharacters();
+			if (surnameAllowColors && !allowedChars.contains("&")) allowedChars = "&" + allowedChars;
+			surnameNotAllowedCharactersRex = "[^" + allowedChars + "]";
 		}
 		surnameMinLength = plugin.getConfiguration().getSurnamesMinLength();
 		surnameMaxLength = plugin.getConfiguration().getSurnamesMaxLength();
+		bannedSurnames   = plugin.getConfiguration().getSurnameBannedNames();
+		surnameConfirmationMode = plugin.getConfiguration().getSurnameConfirmationMode();
 
 		rangeMarry       = plugin.getConfiguration().getRange(Range.Marry);
 		rangeDivorce     = plugin.getConfiguration().getRange(Range.Divorce);
@@ -109,50 +117,52 @@ public final class MarriageManagerImpl implements at.pcgamingfreaks.MarriageMast
 		priestProcessor.add(MessageComponent.class, PassthroughMessageComponentPlaceholderProcessor.INSTANCE);
 		Placeholder[] priestPlaceholders = new Placeholder[] { new Placeholder("PriestName", null, Placeholder.AUTO_INCREMENT_INDIVIDUALLY), new Placeholder("PriestDisplayName", priestProcessor, Placeholder.AUTO_INCREMENT_INDIVIDUALLY)};
 
-		messageSurnameSuccess          = getMSG("Ingame.Surname.SetSuccessful");
-		messageSurnameFailed           = getMSG("Ingame.Surname.SetFailed");
-		messageSurnameToShort          = getMSG("Ingame.Surname.ToShort").staticPlaceholder("MinLength", null, String.valueOf(surnameMinLength)).staticPlaceholder("MaxLength", null, String.valueOf(surnameMaxLength));
-		messageSurnameToLong           = getMSG("Ingame.Surname.ToLong").staticPlaceholder("MinLength", null, String.valueOf(surnameMinLength)).staticPlaceholder("MaxLength", null, String.valueOf(surnameMaxLength));
-		messageSurnameAlreadyUsed      = getMSG("Ingame.Surname.AlreadyUsed");
+		messageSurnameSuccess          = getMSG("Surname.SetSuccessful");
+		messageSurnameFailed           = getMSG("Surname.SetFailed");
+		messageSurnameToShort          = getMSG("Surname.ToShort").staticPlaceholder("MinLength", null, String.valueOf(surnameMinLength)).staticPlaceholder("MaxLength", null, String.valueOf(surnameMaxLength));
+		messageSurnameToLong           = getMSG("Surname.ToLong").staticPlaceholder("MinLength", null, String.valueOf(surnameMinLength)).staticPlaceholder("MaxLength", null, String.valueOf(surnameMaxLength));
+		messageSurnameAlreadyUsed      = getMSG("Surname.AlreadyUsed");
+		messageSurnameBanned           = getMSG("Surname.Banned");
+		messageSurnamePlayerOffline    = getMSG("Surname.PlayerOffline");
 
-		messageAlreadySamePair         = getMSG("Ingame.Marry.AlreadySamePair").placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
-		messageAlreadyMarried          = getMSG("Ingame.Marry.AlreadyMarried").placeholders(Placeholders.PLAYER_NAME);
-		messageNotWithHimself          = getMSG("Ingame.Marry.NotWithHimself").placeholders(Placeholders.PLAYER_NAME);
-		messageSurnameNeeded           = getMSG("Ingame.Marry.SurnameNeeded");
-		messageMarried                 = getMSG("Ingame.Marry.Married").placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
-		messageHasMarried              = getMSG("Ingame.Marry.HasMarried").placeholders(priestPlaceholders).placeholders(Placeholders.PARTNER_NAME);
-		messageBroadcastMarriage       = getMSG("Ingame.Marry.Broadcast").placeholders(priestPlaceholders).placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
+		messageAlreadySamePair         = getMSG("Marry.AlreadySamePair").placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
+		messageAlreadyMarried          = getMSG("Marry.AlreadyMarried").placeholders(Placeholders.PLAYER_NAME);
+		messageNotWithHimself          = getMSG("Marry.NotWithHimself").placeholders(Placeholders.PLAYER_NAME);
+		messageSurnameNeeded           = getMSG("Marry.SurnameNeeded");
+		messageMarried                 = getMSG("Marry.Married").placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
+		messageHasMarried              = getMSG("Marry.HasMarried").placeholders(priestPlaceholders).placeholders(Placeholders.PARTNER_NAME);
+		messageBroadcastMarriage       = getMSG("Marry.Broadcast").placeholders(priestPlaceholders).placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
 		if (!announceMarriage) messageBroadcastMarriage.setSendMethod(SendMethod.DISABLED);
-		messageNotInRange              = getMSG("Ingame.Marry.NotInRange").placeholders(rangePlaceholder);
-		messageAlreadyOpenRequest      = getMSG("Ingame.Marry.AlreadyOpenRequest").placeholders(Placeholders.PLAYER_NAME);
+		messageNotInRange              = getMSG("Marry.NotInRange").placeholders(rangePlaceholder);
+		messageAlreadyOpenRequest      = getMSG("Marry.AlreadyOpenRequest").placeholders(Placeholders.PLAYER_NAME);
 
-		messageSelfConfirm             = getMSG("Ingame.Marry.Self.Confirm").placeholders(Placeholders.PLAYER_NAME);
-		messageNotYourself             = getMSG("Ingame.Marry.Self.NotYourself");
-		messageSelfNotInRange          = getMSG("Ingame.Marry.Self.NotInRange").placeholders(rangePlaceholder);
-		messageSelfAlreadySamePair     = getMSG("Ingame.Marry.Self.AlreadySamePair").placeholders(Placeholders.mkPlayerNameRegex("(Partner)?"));
-		messageSelfAlreadyMarried      = getMSG("Ingame.Marry.Self.AlreadyMarried").placeholders(Placeholders.PLAYER_NAME);
-		messageSelfMarryRequestSent    = getMSG("Ingame.Marry.Self.RequestSent");
-		messageSelfOtherAlreadyMarried = getMSG("Ingame.Marry.Self.OtherAlreadyMarried").placeholders(Placeholders.PLAYER_NAME);
-		messageSelfAlreadyOpenRequest  = getMSG("Ingame.Marry.Self.AlreadyOpenRequest");
-		messageSelfNotOnYourOwn        = getMSG("Ingame.Marry.Self.NotOnYourOwn");
+		messageSelfConfirm             = getMSG("Marry.Self.Confirm").placeholders(Placeholders.PLAYER_NAME);
+		messageNotYourself             = getMSG("Marry.Self.NotYourself");
+		messageSelfNotInRange          = getMSG("Marry.Self.NotInRange").placeholders(rangePlaceholder);
+		messageSelfAlreadySamePair     = getMSG("Marry.Self.AlreadySamePair").placeholders(Placeholders.mkPlayerNameRegex("(Partner)?"));
+		messageSelfAlreadyMarried      = getMSG("Marry.Self.AlreadyMarried").placeholders(Placeholders.PLAYER_NAME);
+		messageSelfMarryRequestSent    = getMSG("Marry.Self.RequestSent");
+		messageSelfOtherAlreadyMarried = getMSG("Marry.Self.OtherAlreadyMarried").placeholders(Placeholders.PLAYER_NAME);
+		messageSelfAlreadyOpenRequest  = getMSG("Marry.Self.AlreadyOpenRequest");
+		messageSelfNotOnYourOwn        = getMSG("Marry.Self.NotOnYourOwn");
 
-		messageMaxPartnersReached          = getMSG("Ingame.Marry.MaxPartnersReached").staticPlaceholder("MaxPartnerCount", null, Integer.toString(maxPartners)).placeholders(Placeholders.PLAYER_NAME);
-		messageSelfMaxPartnersReached      = getMSG("Ingame.Marry.Self.MaxPartnersReached").staticPlaceholder("MaxPartnerCount", null, Integer.toString(maxPartners));
-		messageSelfMaxPartnersReachedOther = getMSG("Ingame.Marry.Self.MaxPartnersReachedOther").staticPlaceholder("MaxPartnerCount", null, Integer.toString(maxPartners)).placeholders(Placeholders.PLAYER_NAME);
+		messageMaxPartnersReached          = getMSG("Marry.MaxPartnersReached").staticPlaceholder("MaxPartnerCount", null, Integer.toString(maxPartners)).placeholders(Placeholders.PLAYER_NAME);
+		messageSelfMaxPartnersReached      = getMSG("Marry.Self.MaxPartnersReached").staticPlaceholder("MaxPartnerCount", null, Integer.toString(maxPartners));
+		messageSelfMaxPartnersReachedOther = getMSG("Marry.Self.MaxPartnersReachedOther").staticPlaceholder("MaxPartnerCount", null, Integer.toString(maxPartners)).placeholders(Placeholders.PLAYER_NAME);
 
-		messageDivorced                = getMSG("Ingame.Divorce.Divorced").placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
-		messageDivorcedPlayer          = getMSG("Ingame.Divorce.DivorcedPlayer").placeholders(priestPlaceholders).placeholders(Placeholders.PARTNER_NAME);
-		messageBroadcastDivorce        = getMSG("Ingame.Divorce.Broadcast").placeholders(priestPlaceholders).placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
+		messageDivorced                = getMSG("Divorce.Divorced").placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
+		messageDivorcedPlayer          = getMSG("Divorce.DivorcedPlayer").placeholders(priestPlaceholders).placeholders(Placeholders.PARTNER_NAME);
+		messageBroadcastDivorce        = getMSG("Divorce.Broadcast").placeholders(priestPlaceholders).placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
 		if (!announceDivorce) messageBroadcastDivorce.setSendMethod(SendMethod.DISABLED);
-		messageDivorceNotInRange       = getMSG("Ingame.Divorce.NotInRange").placeholders(rangePlaceholder);
+		messageDivorceNotInRange       = getMSG("Divorce.NotInRange").placeholders(rangePlaceholder);
 
-		messageSelfDivorced            = getMSG("Ingame.Divorce.Self.Divorced").placeholders(Placeholders.PLAYER_NAME);
-		messageSelfDivorceConfirm      = getMSG("Ingame.Divorce.Self.Confirm").placeholders(Placeholders.PLAYER_NAME);
-		messageSelfDivorcedPlayer      = getMSG("Ingame.Divorce.Self.DivorcedPlayer").placeholders(Placeholders.PLAYER_NAME);
-		messageSelfBroadcastDivorce    = getMSG("Ingame.Divorce.Self.Broadcast").placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
+		messageSelfDivorced            = getMSG("Divorce.Self.Divorced").placeholders(Placeholders.PLAYER_NAME);
+		messageSelfDivorceConfirm      = getMSG("Divorce.Self.Confirm").placeholders(Placeholders.PLAYER_NAME);
+		messageSelfDivorcedPlayer      = getMSG("Divorce.Self.DivorcedPlayer").placeholders(Placeholders.PLAYER_NAME);
+		messageSelfBroadcastDivorce    = getMSG("Divorce.Self.Broadcast").placeholders(Placeholders.PLAYER1_NAME).placeholders(Placeholders.PLAYER2_NAME);
 		if (!announceDivorce) messageSelfBroadcastDivorce.setSendMethod(SendMethod.DISABLED);
-		messageSelfDivorceRequestSent  = getMSG("Ingame.Divorce.Self.RequestSent").placeholders(Placeholders.PLAYER_NAME);
-		messageSelfDivorceNotInRange   = getMSG("Ingame.Divorce.Self.NotInRange").placeholders(rangePlaceholder);
+		messageSelfDivorceRequestSent  = getMSG("Divorce.Self.RequestSent").placeholders(Placeholders.PLAYER_NAME);
+		messageSelfDivorceNotInRange   = getMSG("Divorce.Self.NotInRange").placeholders(rangePlaceholder);
 
 		//region init messages of request classes
 		SelfMarryAcceptRequest.loadMessages(plugin);
@@ -172,7 +182,7 @@ public final class MarriageManagerImpl implements at.pcgamingfreaks.MarriageMast
 
 	private Message getMSG(String path)
 	{
-		return plugin.getLanguage().getMessage(path);
+		return plugin.getLanguage().getMessage("Ingame." + path);
 	}
 
 	//region settings getter
@@ -202,7 +212,7 @@ public final class MarriageManagerImpl implements at.pcgamingfreaks.MarriageMast
 			String surnameCleaned = s.replaceAll(surnameNotAllowedCharactersRex, "");
 			if(!s.equals(surnameCleaned))
 			{ // Surname contains not allowed chars
-				surname = surnameCleaned; //TODO add back colors
+				surname = surnameCleaned;
 			}
 		}
 		return (surnameAllowColors) ? MessageColor.translateAlternateColorCodes('&', surname) : surname;
@@ -218,7 +228,7 @@ public final class MarriageManagerImpl implements at.pcgamingfreaks.MarriageMast
 	public boolean isSurnameValid(@NotNull String surname)
 	{
 		surname = cleanupSurname(surname);
-		return surname != null && isSurnameLengthValid(surname) && isSurnameAvailable(surname);
+		return surname != null && isSurnameLengthValid(surname) && isSurnameAvailable(surname) && !bannedSurnames.contains(surname.toLowerCase(Locale.ROOT));
 	}
 
 	@Override
@@ -233,49 +243,79 @@ public final class MarriageManagerImpl implements at.pcgamingfreaks.MarriageMast
 		setSurname(marriage, surname, Bukkit.getConsoleSender());
 	}
 
+	private boolean checkSetSurname(final @Nullable String surname, @NotNull CommandSender changer)
+	{
+		if (surname == null)
+		{
+			if (plugin.isSurnamesForced())
+			{
+				messageSurnameFailed.send(changer);
+				return false;
+			}
+			return true;
+		}
+		if (surname.length() < surnameMinLength)
+		{
+			messageSurnameToShort.send(changer);
+			return false;
+		}
+		if (surname.length() > surnameMaxLength)
+		{
+			messageSurnameToLong.send(changer);
+			return false;
+		}
+		if (bannedSurnames.contains(surname.toLowerCase(Locale.ROOT)))
+		{
+			messageSurnameBanned.send(changer);
+			return false;
+		}
+		return true;
+	}
+
 	@Override
 	public void setSurname(@NotNull Marriage marriage, String surname, @NotNull CommandSender changer)
 	{
 		surname = cleanupSurname(surname);
-		if(surname == null && plugin.isSurnamesForced())
+		if (!checkSetSurname(surname, changer)) return;
+		if (!(changer instanceof Player) || surnameConfirmationMode == SurnameConfirmationMode.None)
+			finishSetSurname(marriage, surname, changer);
+		else
+			requestSetSurname(marriage, surname, changer);
+	}
+
+	private void requestSetSurname(@NotNull Marriage marriage, String surname, @NotNull CommandSender changer)
+	{
+		Player player = (Player) changer;
+		MarriagePlayer partner = marriage.getAnyOnlinePartner();
+		if ((surnameConfirmationMode == SurnameConfirmationMode.BothPlayers && !marriage.isBothOnline()) || partner == null)
 		{
-			messageSurnameFailed.send(changer);
+			messageSurnamePlayerOffline.send(player, marriage.getSurnameString(), surname == null ? "" : surname);
+			return;
 		}
-		else if(surname == null || surname.length() >= surnameMinLength)
+		plugin.getCommandManager().registerAcceptPendingRequest(new PriestSurnameAcceptRequest(this, partner, plugin.getPlayerData(player), marriage, true, surname));
+	}
+
+	public void finishSetSurname(@NotNull Marriage marriage, String surname, @NotNull CommandSender changer)
+	{
+		if (surname != null && !isSurnameAvailable(surname))
 		{
-			if(surname == null || surname.length() <= surnameMaxLength)
+			messageSurnameAlreadyUsed.send(changer);
+			return;
+		}
+		SurnameChangeEvent event = new SurnameChangeEvent(marriage, surname, changer);
+		plugin.getServer().getPluginManager().callEvent(event);
+		if(!event.isCancelled())
+		{
+			surname = event.getNewSurname();
+			if(marriage.setSurname(surname))
 			{
-				if(surname == null || isSurnameAvailable(surname))
-				{
-					SurnameChangeEvent event = new SurnameChangeEvent(marriage, surname, changer);
-					plugin.getServer().getPluginManager().callEvent(event);
-					if(!event.isCancelled())
-					{
-						surname = event.getNewSurname();
-						if(marriage.setSurname(surname))
-						{
-							messageSurnameSuccess.send(changer);
-							plugin.getServer().getPluginManager().callEvent(new SurnameChangedEvent(marriage, surname, changer));
-						}
-						else
-						{
-							messageSurnameFailed.send(changer);
-						}
-					}
-					else
-					{
-						messageSurnameAlreadyUsed.send(changer);
-					}
-				}
+				messageSurnameSuccess.send(changer);
+				plugin.getServer().getPluginManager().callEvent(new SurnameChangedEvent(marriage, surname, changer));
 			}
 			else
 			{
-				messageSurnameToLong.send(changer);
+				messageSurnameFailed.send(changer);
 			}
-		}
-		else
-		{
-			messageSurnameToShort.send(changer);
 		}
 	}
 	//endregion
